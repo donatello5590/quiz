@@ -80,14 +80,19 @@ button:focus-visible{outline:3px solid var(--olive);outline-offset:2px}
   display:flex;align-items:center;gap:12px;text-align:left;
   padding:16px 14px;font-weight:600;color:#14140f;min-height:66px;width:100%;
 }
-.ans .sym{font-size:20px;line-height:1;flex:0 0 auto;opacity:.65}
-.ans.a{background:var(--olive)}
-.ans.b{background:var(--rust);color:#fff}
-.ans.c{background:var(--teal);color:#fff}
-.ans.d{background:var(--clay);color:#fff}
+.ans .sym{
+  font-family:var(--display);font-size:15px;line-height:1;flex:0 0 auto;
+  width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.17);
+  display:flex;align-items:center;justify-content:center;
+}
+.ans.a,.ans.b,.ans.c,.ans.d{background:var(--olive);color:#14140f}
 .ans:disabled{cursor:default}
 .ans.dim{opacity:.22}
-.ans.picked{outline:3px solid var(--ink);outline-offset:2px;opacity:1}
+.ans.picked{outline:3px solid var(--ink);outline-offset:2px;opacity:1;animation:warten 1.15s ease-in-out infinite}
+@keyframes warten{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.7;transform:scale(.982)}
+}
 .ans.right{outline:3px solid var(--ink);outline-offset:2px;opacity:1}
 
 .verdict{font-family:var(--display);font-weight:900;font-size:30px;letter-spacing:.03em;margin:0}
@@ -117,7 +122,7 @@ tr.top td.r{color:var(--olive)}
 .err{color:var(--rust);font-size:14px}
 .center{text-align:center}
 .dots{color:var(--muted);font-size:15px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -138,7 +143,7 @@ tr.top td.r{color:var(--olive)}
     <p class="sub center">Goodbye Summer Quiz</p>
     <div class="card">
       <label for="name">Dein Name</label>
-      <input type="text" id="name" maxlength="18" autocomplete="off" autocapitalize="words" placeholder="z.B. Andi">
+      <input type="text" id="name" maxlength="18" autocomplete="off" autocapitalize="words" placeholder="z.B. Bassi">
       <div style="height:12px"></div>
       <button class="btn" id="joinBtn">Mitspielen</button>
       <p class="err" id="joinErr" style="display:none"></p>
@@ -299,7 +304,7 @@ const ROUNDS = {
 
 /* ===== ab hier musst Du nichts mehr ändern ============================ */
 
-const SYM = ["▲","●","■","◆"], CLS = ["a","b","c","d"];
+const SYM = ["A","B","C","D"], CLS = ["a","b","c","d"];
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const IS_HOST = params.get("host") === HOST_CODE;
