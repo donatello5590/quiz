@@ -101,6 +101,11 @@ button:focus-visible{outline:3px solid var(--olive);outline-offset:2px}
   30%,50%,70%{transform:translateX(-8px)}
   40%,60%{transform:translateX(8px)}
 }
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.stat{background:#0b0b0a;border:1px solid var(--line);border-radius:10px;padding:12px 8px}
+.stat .v{display:block;font-family:var(--display);font-size:25px;color:var(--olive);line-height:1.1;
+  font-variant-numeric:tabular-nums}
+.stat .l{display:block;font-size:12px;color:var(--muted);margin-top:5px}
 .funken{position:absolute;inset:0;pointer-events:none;overflow:visible}
 .funke{position:absolute;left:50%;top:34%;width:7px;height:7px;border-radius:50%;
   opacity:0;animation:fliegen 1s ease-out forwards}
@@ -208,7 +213,10 @@ tr.top td.r{color:var(--olive)}
       <p class="verdict" id="qVerdict">–</p>
       <p class="sub" id="qCorrect"></p>
       <p class="big" id="qPoints">+0</p>
-      <p class="sub" id="qStand"></p>
+      <div class="stats">
+        <div class="stat"><span class="v" id="qTotal">0</span><span class="l">Punkte gesamt</span></div>
+        <div class="stat"><span class="v" id="qRank">–</span><span class="l" id="qRankLabel">Platz</span></div>
+      </div>
     </div>
   </section>
 
@@ -619,16 +627,22 @@ function paintReveal(){
   const b = board();
   const pos = b.findIndex(p => p.id === myId) + 1;
   const mich = pos ? b[pos-1] : null;
-  $("qStand").textContent = mich
-    ? `Gesamt ${mich.score} Punkte · Platz ${pos} von ${b.length}`
-    : "";
+  $("qTotal").textContent = mich ? mich.score : 0;
+  $("qRank").textContent = pos ? pos : "–";
+  $("qRankLabel").textContent = pos ? `Platz von ${b.length}` : "Platz";
 
   const box = $("qResult");
+  box.classList.remove("shake");
   box.style.display = "";
 
   if (revealAnim !== lastKey){
     revealAnim = lastKey;
-    if (ok) feuerwerk(); else { box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake"); }
+    if (ok){
+      feuerwerk();
+    } else {
+      void box.offsetWidth;
+      box.classList.add("shake");
+    }
   }
 }
 
