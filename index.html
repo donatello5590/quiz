@@ -308,17 +308,6 @@ function fatal(msg){
 }
 window.addEventListener("error", function(e){ fatal("JS-Fehler: " + (e.message || e)); });
 
-try {
-  if (FIREBASE_CONFIG.apiKey === "HIER_EINTRAGEN"){
-    fatal("Firebase-Config fehlt noch in der index.html.");
-  } else if (typeof firebase === "undefined"){
-    fatal("Firebase-SDK wurde nicht geladen. Internetverbindung oder Adblocker pruefen.");
-  } else {
-    boot();
-  }
-} catch (e) {
-  fatal("Start fehlgeschlagen: " + (e && e.message ? e.message : e));
-}
 
 function show(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id));
@@ -608,6 +597,20 @@ function renderHost(){
     stopTick();
     $("hoTimer").textContent = "–";
   }
+}
+
+
+/* ---- Start ganz am Ende, damit alle Variablen deklariert sind ---- */
+try {
+  if (FIREBASE_CONFIG.apiKey === "HIER_EINTRAGEN"){
+    fatal("Firebase-Config fehlt noch in der index.html.");
+  } else if (typeof firebase === "undefined"){
+    fatal("Firebase-SDK wurde nicht geladen. Internetverbindung oder Adblocker pruefen.");
+  } else {
+    boot();
+  }
+} catch (e) {
+  fatal("Start fehlgeschlagen: " + (e && e.message ? e.message : e));
 }
 </script>
 </body>
