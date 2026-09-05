@@ -89,6 +89,26 @@ button:focus-visible{outline:3px solid var(--olive);outline-offset:2px}
 .ans:disabled{cursor:default}
 .ans.dim{opacity:.22}
 .ans.picked{outline:3px solid var(--ink);outline-offset:2px;opacity:1;animation:warten 1.15s ease-in-out infinite}
+.ans.correct{background:var(--olive);color:#14140f;opacity:1;animation:none}
+.ans.wrong{background:var(--bad);color:#F2F0E9;opacity:.82;animation:none}
+.ans.chosen{outline:3px solid var(--ink);outline-offset:2px;opacity:1}
+
+#qResult{margin-top:4px;position:relative;overflow:visible}
+#qResult.shake{animation:ruckeln .5s cubic-bezier(.36,.07,.19,.97)}
+@keyframes ruckeln{
+  10%,90%{transform:translateX(-3px)}
+  20%,80%{transform:translateX(5px)}
+  30%,50%,70%{transform:translateX(-8px)}
+  40%,60%{transform:translateX(8px)}
+}
+.funken{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.funke{position:absolute;left:50%;top:34%;width:7px;height:7px;border-radius:50%;
+  opacity:0;animation:fliegen 1s ease-out forwards}
+@keyframes fliegen{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  70%{opacity:1}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.35)}
+}
 @keyframes warten{
   0%,100%{opacity:1;transform:scale(1)}
   50%{opacity:.7;transform:scale(.982)}
@@ -113,6 +133,13 @@ tr.top td.r{color:var(--olive)}
 .hostbar .full{grid-column:1/-1}
 .names{display:flex;flex-wrap:wrap;gap:7px}
 .names span{background:#0b0b0a;border:1px solid var(--line);padding:5px 10px;border-radius:999px;font-size:14px}
+.hoopts{display:grid;gap:6px;margin:10px 0 12px}
+.hoopt{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);
+  border-radius:9px;font-size:15px;color:var(--muted)}
+.hoopt .b{font-family:var(--display);font-size:13px;width:24px;height:24px;border-radius:50%;
+  background:var(--line);color:var(--ink);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.hoopt.ok{border-color:var(--olive);color:var(--ink);background:rgba(167,170,60,.09)}
+.hoopt.ok .b{background:var(--olive);color:#14140f}
 .logopanel{background:#F2F0E9;border-radius:14px;padding:20px 22px;display:flex;justify-content:center}
 .logopanel img{width:100%;max-width:330px;height:auto;display:block}
 .logopanel.small{padding:12px 14px}
@@ -122,7 +149,8 @@ tr.top td.r{color:var(--olive)}
 .err{color:var(--rust);font-size:14px}
 .center{text-align:center}
 .dots{color:var(--muted);font-size:15px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}
+.funken{display:none}}
 </style>
 </head>
 <body>
@@ -132,8 +160,8 @@ tr.top td.r{color:var(--olive)}
   <section id="s-config" class="screen">
     <h1 class="brand">SCHWITZ<span>KASTEN</span></h1>
     <div class="card">
-      <p class="err" id="configErr">Firebase ist noch nicht eingetragen.</p>
-      <p class="sub">Trag oben im Script unter <b>FIREBASE_CONFIG</b> die Daten Deines Projekts ein.</p>
+      <p class="err" id="configErr">Es ist etwas schiefgelaufen.</p>
+      <p class="sub" id="configHint" style="word-break:break-word"></p>
     </div>
   </section>
 
@@ -175,19 +203,12 @@ tr.top td.r{color:var(--olive)}
     <p class="qtext" id="qText">…</p>
     <div class="answers" id="qAnswers"></div>
     <p class="sub center" id="qHint"></p>
-  </section>
-
-  <!-- ============ AUFLÖSUNG ============ -->
-  <section id="s-reveal" class="screen">
-    <div class="card center">
-      <p class="verdict" id="rvVerdict">–</p>
-      <p class="sub" id="rvCorrect"></p>
-      <p class="big" id="rvPoints">+0</p>
-      <p class="sub" id="rvRank"></p>
-    </div>
-    <div class="card">
-      <p class="sub" style="margin-top:0">Zwischenstand</p>
-      <table id="rvBoard"></table>
+    <div class="card center" id="qResult" style="display:none">
+      <div class="funken" id="qFunken"></div>
+      <p class="verdict" id="qVerdict">–</p>
+      <p class="sub" id="qCorrect"></p>
+      <p class="big" id="qPoints">+0</p>
+      <p class="sub" id="qStand"></p>
     </div>
   </section>
 
@@ -218,7 +239,7 @@ tr.top td.r{color:var(--olive)}
     <div class="card">
       <div class="qmeta"><span class="qnum" id="hoNum">LOBBY</span><span class="timer" id="hoTimer">–</span></div>
       <p class="qtext" id="hoQ" style="font-size:19px">Noch keine Frage gestartet.</p>
-      <p class="sub" id="hoCorrect"></p>
+      <div class="hoopts" id="hoOpts"></div>
       <p class="pill" id="hoCount">0 Spieler</p>
     </div>
 
@@ -494,7 +515,7 @@ function render(){
   if (!myId){ show("s-join"); return; }
 
   const key = (game.round||1) + "_" + (game.qIndex ?? -1);
-  if (key !== lastKey){ lastKey = key; myAnswer = null; }
+  if (key !== lastKey){ lastKey = key; myAnswer = null; revealAnim = ""; }
 
   const ph = game.phase;
 
@@ -517,18 +538,9 @@ function render(){
   stopTick();
 
   if (ph === "reveal"){
-    show("s-reveal");
-    const item = q(); if (!item) return;
-    const ok = myAnswer && myAnswer.correct;
-    const v = $("rvVerdict");
-    v.textContent = myAnswer ? (ok ? "Richtig" : "Daneben") : "Zu langsam";
-    v.className = "verdict " + (ok ? "ok" : "bad");
-    $("rvCorrect").textContent = "Richtig war: " + item.o[item.a];
-    $("rvPoints").textContent = "+" + (myAnswer ? myAnswer.p : 0);
-    const b = board();
-    const pos = b.findIndex(p => p.id === myId) + 1;
-    $("rvRank").textContent = pos ? `Du liegst auf Platz ${pos} von ${b.length}` : "";
-    drawTable($("rvBoard"), b, 5);
+    show("s-q");
+    paintQuestion();
+    paintReveal();
     return;
   }
 
@@ -547,6 +559,11 @@ function render(){
 
 function paintQuestion(){
   const item = q(); if (!item) return;
+  if (game.phase === "question"){
+    $("qResult").style.display = "none";
+    $("qBar").style.display = "";
+    $("qTimer").style.display = "";
+  }
   $("qNum").textContent = `RUNDE ${game.round} · FRAGE ${game.qIndex+1}/${ROUNDS[game.round].length}`;
   $("qText").textContent = item.q;
   const wrap = $("qAnswers");
@@ -574,6 +591,64 @@ function paintAnswers(){
     });
     $("qHint").textContent = "Antwort ist raus. Gleich kommt die Auflösung.";
   }
+}
+
+let revealAnim = "";
+
+function paintReveal(){
+  const item = q(); if (!item) return;
+  const btns = $("qAnswers").querySelectorAll("button");
+  btns.forEach(b => {
+    const i = +b.dataset.i;
+    b.disabled = true;
+    b.className = "ans " + CLS[i] + (i === item.a ? " correct" : " wrong")
+                + (myAnswer && i === myAnswer.c ? " chosen" : "");
+  });
+
+  $("qBar").style.display = "none";
+  $("qTimer").style.display = "none";
+  $("qHint").textContent = "";
+
+  const ok = !!(myAnswer && myAnswer.correct);
+  const v = $("qVerdict");
+  v.textContent = !myAnswer || myAnswer.c === -1 ? "Zu langsam" : (ok ? "Richtig" : "Daneben");
+  v.className = "verdict " + (ok ? "ok" : "bad");
+  $("qCorrect").textContent = ok ? "" : "Richtig war " + SYM[item.a] + ": " + item.o[item.a];
+  $("qPoints").textContent = "+" + (myAnswer ? myAnswer.p : 0);
+
+  const b = board();
+  const pos = b.findIndex(p => p.id === myId) + 1;
+  const mich = pos ? b[pos-1] : null;
+  $("qStand").textContent = mich
+    ? `Gesamt ${mich.score} Punkte · Platz ${pos} von ${b.length}`
+    : "";
+
+  const box = $("qResult");
+  box.style.display = "";
+
+  if (revealAnim !== lastKey){
+    revealAnim = lastKey;
+    if (ok) feuerwerk(); else { box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake"); }
+  }
+}
+
+function feuerwerk(){
+  const wrap = $("qFunken");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const farben = ["#A7AA3C","#F2F0E9","#C4622D","#857270"];
+  for (let i = 0; i < 26; i++){
+    const f = document.createElement("div");
+    f.className = "funke";
+    const winkel = Math.random() * Math.PI * 2;
+    const weite = 60 + Math.random() * 90;
+    f.style.setProperty("--dx", Math.cos(winkel) * weite + "px");
+    f.style.setProperty("--dy", (Math.sin(winkel) * weite + 40) + "px");
+    f.style.background = farben[i % farben.length];
+    f.style.animationDelay = (Math.random() * 0.14) + "s";
+    wrap.appendChild(f);
+  }
+  setTimeout(() => { if (wrap) wrap.innerHTML = ""; }, 1400);
 }
 
 function startTick(){
@@ -624,11 +699,13 @@ function renderHost(){
   if (item){
     $("hoNum").textContent = `FRAGE ${game.qIndex+1}/${total}`;
     $("hoQ").textContent = item.q;
-    $("hoCorrect").textContent = "Richtig: " + item.o[item.a];
+    $("hoOpts").innerHTML = item.o.map((t,i) =>
+      `<div class="hoopt ${i === item.a ? "ok" : ""}"><span class="b">${SYM[i]}</span><span>${esc(t)}</span></div>`
+    ).join("");
   } else {
     $("hoNum").textContent = "LOBBY";
     $("hoQ").textContent = "Noch keine Frage gestartet.";
-    $("hoCorrect").textContent = "";
+    $("hoOpts").innerHTML = "";
   }
 
   if (game.phase === "question"){
