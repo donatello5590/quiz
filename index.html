@@ -270,7 +270,7 @@ tr.top td.r{color:var(--olive)}
 
     <div class="card">
       <p class="sub" id="hoBoardTitle" style="margin-top:0">Aktueller Stand</p>
-      <table id="hoBoard"></table>
+      <table id="hoStand"></table>
     </div>
   </section>
 
@@ -717,7 +717,7 @@ function renderHost(){
     game.phase === "final" ? "Endergebnis — sehen gerade alle" :
     game.phase === "board" ? "Zwischenstand — sehen gerade alle" :
     "Aktueller Stand";
-  drawTable($("hoBoard"), b, zeigtAlle ? 0 : 12);
+  drawTable($("hoStand"), b, zeigtAlle ? 0 : 12);
 
   const item = q();
   const total = ROUNDS[game.round] ? ROUNDS[game.round].length : 0;
