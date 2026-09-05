@@ -263,13 +263,13 @@ tr.top td.r{color:var(--olive)}
       <button class="btn full" id="hoNext">Frage 1 starten</button>
       <button class="btn ghost" id="hoReveal">Auflösen</button>
       <button class="btn ghost" id="hoBoard">Zwischenstand</button>
-      <button class="btn ghost full" id="hoRound2">Runde 2 starten (Punkte bleiben)</button>
+      <button class="btn ghost full" id="hoRound2">Runde 2 starten (Punkte auf null)</button>
       <button class="btn ghost full" id="hoFinal">Endergebnis zeigen</button>
       <button class="btn warn full" id="hoReset">Alles zurücksetzen (Spieler + Punkte löschen)</button>
     </div>
 
     <div class="card">
-      <p class="sub" style="margin-top:0">Aktueller Stand</p>
+      <p class="sub" id="hoBoardTitle" style="margin-top:0">Aktueller Stand</p>
       <table id="hoBoard"></table>
     </div>
   </section>
@@ -511,8 +511,14 @@ function initHost(){
   $("hoBoard").onclick  = () => db.ref("game").update({phase:"board"});
   $("hoFinal").onclick  = () => db.ref("game").update({phase:"final"});
   $("hoRound2").onclick = () => {
-    if (!confirm("Runde 2 starten? Punkte aus Runde 1 bleiben erhalten.")) return;
-    db.ref("game").update({round:2, qIndex:-1, phase:"lobby"});
+    if (!confirm("Runde 2 starten? Alle Punkte gehen auf null. Die Gaeste bleiben angemeldet und muessen nichts tun.")) return;
+    const nullen = {};
+    Object.keys(players).forEach(id => { nullen[id + "/score"] = 0; });
+    const fertig = Object.keys(nullen).length ? db.ref("players").update(nullen) : Promise.resolve();
+    fertig.then(() => {
+      db.ref("answers").remove();
+      db.ref("game").update({round:2, qIndex:-1, phase:"lobby"});
+    });
   };
   $("hoReset").onclick = () => {
     if (!confirm("Wirklich ALLES löschen? Alle Spieler und Punkte sind weg.")) return;
@@ -705,7 +711,13 @@ function tick(){
 function renderHost(){
   const b = board();
   $("hoCount").textContent = b.length + (b.length === 1 ? " Spieler" : " Spieler");
-  drawTable($("hoBoard"), b, 12);
+
+  const zeigtAlle = (game.phase === "board" || game.phase === "final");
+  $("hoBoardTitle").textContent =
+    game.phase === "final" ? "Endergebnis — sehen gerade alle" :
+    game.phase === "board" ? "Zwischenstand — sehen gerade alle" :
+    "Aktueller Stand";
+  drawTable($("hoBoard"), b, zeigtAlle ? 0 : 12);
 
   const item = q();
   const total = ROUNDS[game.round] ? ROUNDS[game.round].length : 0;
