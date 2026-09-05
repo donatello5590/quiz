@@ -295,10 +295,27 @@ const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const IS_HOST = params.get("host") === HOST_CODE;
 
-if (FIREBASE_CONFIG.apiKey === "HIER_EINTRAGEN") {
-  show("s-config");
-} else {
-  boot();
+function fatal(msg){
+  var box = document.getElementById("configHint");
+  if (box) box.textContent = String(msg);
+  var scr = document.getElementById("s-config");
+  if (scr){
+    document.querySelectorAll(".screen").forEach(function(x){ x.classList.remove("on"); });
+    scr.classList.add("on");
+  }
+}
+window.addEventListener("error", function(e){ fatal("JS-Fehler: " + (e.message || e)); });
+
+try {
+  if (FIREBASE_CONFIG.apiKey === "HIER_EINTRAGEN"){
+    fatal("Firebase-Config fehlt noch in der index.html.");
+  } else if (typeof firebase === "undefined"){
+    fatal("Firebase-SDK wurde nicht geladen. Internetverbindung oder Adblocker pruefen.");
+  } else {
+    boot();
+  }
+} catch (e) {
+  fatal("Start fehlgeschlagen: " + (e && e.message ? e.message : e));
 }
 
 function show(id){
@@ -317,13 +334,20 @@ function boot(){
   db.ref("game").on("value", s => {
     game = s.val() || {phase:"lobby", round:1, qIndex:-1};
     render();
-  });
+  }, err => fatal("Datenbank nicht lesbar: " + err.message + " — Regeln in Firebase pruefen."));
+
   db.ref("players").on("value", s => {
     players = s.val() || {};
     render();
-  });
+  }, err => fatal("Datenbank nicht lesbar: " + err.message));
 
   if (IS_HOST) { initHost(); } else { initPlayer(); }
+
+  setTimeout(function(){
+    if (!document.querySelector(".screen.on")){
+      fatal("Keine Verbindung zur Datenbank. Pruefe die databaseURL und ob die Realtime Database wirklich angelegt ist.");
+    }
+  }, 6000);
 }
 
 function now(){ return Date.now() + offset; }
