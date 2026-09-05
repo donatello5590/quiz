@@ -342,10 +342,36 @@ function boot(){
 }
 
 function now(){ return Date.now() + offset; }
+
+/* Antworten mischen - Reihenfolge haengt nur an Runde+Fragennummer,
+   also sehen alle Geraete exakt dieselbe Anordnung. */
+const shuffleCache = {};
+function mix(round, idx, item){
+  const gameSeed = (game && typeof game.seed === "number") ? game.seed : 51;
+  const key = round + "_" + idx + "_" + gameSeed;
+  if (shuffleCache[key]) return shuffleCache[key];
+  let seed = (round * 7919 + idx * 104729 + gameSeed) | 0;
+  const rnd = () => {
+    seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const pairs = item.o.map((text, i) => ({text, right: i === item.a}));
+  for (let i = pairs.length - 1; i > 0; i--){
+    const j = Math.floor(rnd() * (i + 1));
+    [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+  }
+  const out = {q:item.q, o:pairs.map(x => x.text), a:pairs.findIndex(x => x.right)};
+  shuffleCache[key] = out;
+  return out;
+}
+
 function q(){ 
   if (!game || game.qIndex == null || game.qIndex < 0) return null;
   const list = ROUNDS[game.round] || [];
-  return list[game.qIndex] || null;
+  const item = list[game.qIndex];
+  return item ? mix(game.round, game.qIndex, item) : null;
 }
 function board(){
   return Object.entries(players)
@@ -424,7 +450,11 @@ function initHost(){
   $("hoNext").onclick = () => {
     const idx = (game.phase === "lobby" && game.qIndex < 0) ? 0 : (game.qIndex + 1);
     if (idx >= ROUNDS[game.round].length){ alert("Runde " + game.round + " ist durch."); return; }
-    db.ref("game").update({phase:"question", qIndex:idx, startAt: firebase.database.ServerValue.TIMESTAMP});
+    db.ref("game").update({
+      phase:"question", qIndex:idx,
+      seed: Math.floor(Math.random() * 1000000000),
+      startAt: firebase.database.ServerValue.TIMESTAMP
+    });
   };
   $("hoReveal").onclick = () => db.ref("game").update({phase:"reveal"});
   $("hoBoard").onclick  = () => db.ref("game").update({phase:"board"});
