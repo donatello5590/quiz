@@ -298,6 +298,8 @@ const IS_HOST = params.get("host") === HOST_CODE;
 function fatal(msg){
   var box = document.getElementById("configHint");
   if (box) box.textContent = String(msg);
+  var box2 = document.getElementById("configErr");
+  if (box2) box2.textContent = "FEHLER: " + String(msg);
   var scr = document.getElementById("s-config");
   if (scr){
     document.querySelectorAll(".screen").forEach(function(x){ x.classList.remove("on"); });
@@ -347,7 +349,7 @@ function boot(){
     if (!document.querySelector(".screen.on")){
       fatal("Keine Verbindung zur Datenbank. Pruefe die databaseURL und ob die Realtime Database wirklich angelegt ist.");
     }
-  }, 6000);
+  }, 5000);
 }
 
 function now(){ return Date.now() + offset; }
