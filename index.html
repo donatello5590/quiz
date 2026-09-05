@@ -235,8 +235,8 @@ tr.top td.r{color:var(--olive)}
       <h1 class="brand" id="bdTitle">ZWISCHENSTAND</h1>
       <p class="sub" id="bdSub"></p>
     </div>
-    <div class="card"><table id="bdBoard"></table></div>
     <p class="sub center" id="bdFoot"></p>
+    <div class="card"><table id="bdBoard"></table></div>
   </section>
 
   <!-- ============ HOST ============ -->
@@ -306,19 +306,19 @@ const ROUNDS = {
   1: [
     {q:"Wie viele Knochen hat ein erwachsener Mensch?", o:["206","186","226","246"], a:0},
     {q:"Welcher ist der größte Muskel im menschlichen Körper?", o:["Der Gesäßmuskel","Der Oberschenkelmuskel","Der Latissimus","Der Wadenmuskel"], a:0},
-    {q:"Woraus besteht eine Wassermelone zu über 90 Prozent?", o:["Wasser","Zucker","Ballaststoffen","Fruchtsäure"], a:0},
     {q:"Wie viele Kalorien liefert ein Gramm Fett?", o:["9","4","7","12"], a:0},
+    {q:"Seit wann gibt es den Schwitzkasten?", o:["2013","2015","2017","2011"], a:0},
     {q:"Wie lang ist ein olympisches Schwimmbecken?", o:["50 Meter","25 Meter","75 Meter","100 Meter"], a:0},
-    {q:"Wofür steht die Abkürzung DOMS?", o:["Muskelkater","Eine Dehnmethode","Ein Ausdauertest","Eine Trainings-App"], a:0},
     {q:"Wie viele Ringe zeigt die olympische Flagge?", o:["5","4","6","7"], a:0},
-    {q:"Wie viel UVB-Strahlung hält Sonnencreme mit LSF 30 ungefähr ab?", o:["Rund 97 Prozent","Rund 70 Prozent","Rund 30 Prozent","100 Prozent"], a:0},
-    {q:"Wann ist bei uns die Sommersonnenwende?", o:["Um den 21. Juni","Um den 1. Juli","Um den 21. März","Um den 21. Dezember"], a:0},
-    {q:"Wie viel Blut hat ein Erwachsener ungefähr?", o:["5 bis 6 Liter","2 bis 3 Liter","8 bis 9 Liter","12 Liter"], a:0},
     {q:"Welcher Muskel arbeitet beim Klimmzug am stärksten?", o:["Der Latissimus","Der Bizeps","Die Brust","Der Trapezmuskel"], a:0},
     {q:"Wie schnell ist der 100-Meter-Weltrekord der Männer?", o:["9,58 Sekunden","9,79 Sekunden","9,21 Sekunden","10,02 Sekunden"], a:0},
+    {q:"In welcher Straße ist der Schwitzkasten?", o:["Arensbergstraße","Lindenstraße","Wirichstraße","Bahnhofstraße"], a:0},
     {q:"Wie viele Volleyballer einer Mannschaft stehen auf dem Feld?", o:["6","5","7","11"], a:0},
-    {q:"Wie hoch ist die Zugspitze?", o:["2.962 Meter","2.712 Meter","3.105 Meter","2.504 Meter"], a:0},
-    {q:"Was passiert beim Schwitzen wirklich?", o:["Der Körper kühlt sich durch Verdunstung","Er scheidet Giftstoffe aus","Er verbrennt Fett","Er baut Muskeln ab"], a:0}
+    {q:"Was passiert beim Schwitzen wirklich?", o:["Der Körper kühlt sich durch Verdunstung","Er scheidet Giftstoffe aus","Er verbrennt Fett","Er baut Muskeln ab"], a:0},
+    {q:"Wie schwer ist eine olympische Langhantelstange?", o:["20 Kilo","10 Kilo","15 Kilo","25 Kilo"], a:0},
+    {q:"Wie lang ist die Marathondistanz?", o:["42,195 Kilometer","40 Kilometer","45 Kilometer","42,5 Kilometer"], a:0},
+    {q:"Wie oft wurde Arnold Schwarzenegger Mr. Olympia?", o:["Siebenmal","Dreimal","Zehnmal","Einmal"], a:0},
+    {q:"Wo eröffnen wir 2027 einen zweiten Schwitzkasten-Standort?", o:["Manderscheid","Gillenfeld","Kelberg","Wittlich"], a:0}
   ],
   2: [
     {q:"In welcher Straße liegt der Schwitzkasten?", o:["Arensbergstraße","Mehrener Straße","Wirichstraße","Bahnhofstraße"], a:0},
@@ -573,7 +573,7 @@ function render(){
     const pos = b.findIndex(p => p.id === myId) + 1;
     $("bdTitle").innerHTML = fin ? 'END<span>ERGEBNIS</span>' : 'ZWISCHEN<span>STAND</span>';
     $("bdSub").textContent = fin ? "Danke fürs Mitspielen!" : `Runde ${game.round}, nach Frage ${(game.qIndex||0)+1}`;
-    drawTable($("bdBoard"), b, fin ? 20 : 10);
+    drawTable($("bdBoard"), b, 0);
     $("bdFoot").textContent = pos ? `Du: Platz ${pos} mit ${b[pos-1].score} Punkten` : "";
     return;
   }
